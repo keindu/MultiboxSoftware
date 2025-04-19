@@ -8,13 +8,13 @@ use windows::{
     Win32::{
         Foundation::{HWND, LPARAM, WPARAM},
         Graphics::Gdi::{
-                BitBlt, CreateCompatibleBitmap, CreateCompatibleDC, DeleteDC, DeleteObject, GetDC, GetPixel, ReleaseDC, SelectObject, SRCCOPY 
+                BitBlt, CreateCompatibleBitmap, CreateCompatibleDC, DeleteDC, DeleteObject, GetDC, GetPixel, ReleaseDC, SelectObject, SRCCOPY
             },
         UI::{
             Input::KeyboardAndMouse::VK_W,
             WindowsAndMessaging::{
                 FindWindowW, MessageBoxW, PostMessageW, MB_OK, WM_KEYDOWN, WM_KEYUP
-            },            
+            },
         },
     },
 };
@@ -99,11 +99,11 @@ fn main() {
                 ReleaseDC(Some(hwnd), hdc_target);
                 return;
             }
-    
+
             // Get pixel color
-            let actual_color = GetPixel(hdc_mem_dc, 0, 0);
-            println!("Actual color: {:x}", actual_color.0);
-            sleep(Duration::from_millis(100));
+            // let actual_color = GetPixel(hdc_mem_dc, 0, 0);
+            // println!("Actual color: {:x}", actual_color.0);
+            // sleep(Duration::from_millis(100));
         }
 
         // if actual_color == actual_color {

@@ -6,7 +6,7 @@ frame:SetPoint("TOPLEFT", 0, 0)         -- Centers horizontally and vertically
 frame:SetSize(125, 125)          -- Makes it 100x100 pixels in size
 
 -- Create texture object and set properties:
-local texture = frame:CreateTexture() 
+local texture = frame:CreateTexture()
 -- message("3")
 texture:SetPoint("TOPLEFT",93, -248)
 texture:SetSize(1, 1)
@@ -23,47 +23,73 @@ local function test(name)
     -- end
 end
 
-local function getRestoShamanMacro()
+local spellIDs = {
+    [1] = "Lesser Healing Wave",
+    [2] = "Chain Heal",
+    [3] = "Riptide",
+    [4] = "Water Shield",
+    [5] = "Earthliving Weapon",
+    [6] = "Earth Shield",
+    [0] = "Pass"
+}
+
+local function getRestoShamanAction()
+    local spellID, targetID
+
+    -- Check if the player has Water Shield
     if not UnitBuff("player", "Water Shield") then
-        return "/cast Water Shield"
+        spellID, targetID = 4, 0
+    -- Check if the player has a weapon enchant
+    elseif not GetWeaponEnchantInfo() then
+        spellID, targetID = 5, 0
+    -- Focus check for Earth Shield
+    elseif GetUnitName("focus") and UnitInRange("focus") and not UnitBuff("focus", "Earth Shield") then
+        spellID, targetID = 6, -1
+    else
+        -- Default values in case no action is needed
+        spellID, targetID = 0, 0
     end
-    if not GetWeaponEnchantInfo() then
-        return "/cast Earthliving Weapon"
-    end
-    if GetUnitName("focus") and UnitInRange("focus") and not UnitBuff("focus", "Earth Shield") then
-        return "/cast [target=focus] Earth Shield"
-    end
-    local macrotemplate = "/cast [@raidNUMBER] Lesser Healing Wave"
-    local targetPercent = 1.0
+
+    -- Loop through raid members to check who needs healing
     local numtargets = 0
     local target = 0
+    local targetPercent = 1.0
+
     for i = 1, GetNumRaidMembers() do
-        u=GetUnitName("raid"..i);
-        local healthPercent = UnitHealth(u)/UnitHealthMax(u);
-        if healthPercent < 1.0 then
-            if UnitIsPlayer(u) and UnitInRange(u)  then
-                numtargets = numtargets + 1;
-                if healthPercent < targetPercent then
-                    targetPercent = healthPercent;
-                    target = i;
-                end;
+        local u = "raid" .. i
+        local healthPercent = UnitHealth(u) / UnitHealthMax(u)
+
+        if healthPercent < 1.0 and UnitIsPlayer(u) and UnitInRange(u) then
+            numtargets = numtargets + 1
+            if healthPercent < targetPercent then
+                targetPercent = healthPercent
+                target = i
             end
         end
-    end;
+    end
+
+    -- If there are multiple targets, choose Chain Heal
     if numtargets > 1 then
-        return gsub("/cast [@raidNUMBER] Chain Heal", "NUMBER", target);
+        spellID, targetID = 2, target
+    -- If there's at least one target, decide on spell
     elseif numtargets > 0 then
-        local start, duration, enabled, modRate = GetSpellCooldown("Riptide")
+        local start, duration = GetSpellCooldown("Riptide")
         if start > 0 and duration > 0 then
-            return gsub("/cast [@raidNUMBER] Lesser Healing Wave", "NUMBER", target);
+            spellID, targetID = 1, target
         else
-            return gsub("/cast [@raidNUMBER] Riptide", "NUMBER", target);
+            spellID, targetID = 3, target
         end
-    else
-        return "/run print(\"Doing nothing\")";
-    end;
+    end
+
+    -- Draw the pixel when we decide on a spell and target
+    drawPixel(spellID / 255, 0, (targetID + 1) / 255)  -- We shift -1 to 0 for the focus case
+
+    return spellID, targetID
 end
 
+-- Call the function and draw the pixel
+local spellID, targetID = getRestoShamanAction()
+DEFAULT_CHAT_FRAME:AddMessage(string.format("Spell ID: %d | Target ID: %d", spellID, targetID))
 
 SlashCmdList["HELLO"] = test
 local i = 0;
